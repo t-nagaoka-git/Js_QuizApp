@@ -23,35 +23,28 @@
     }
 
     displayQuiz() {
+      h1.textContent = `問題${currentQuiz + 1}`;
+      category.textContent = `[ジャンル]${this.category}`;
+      difficulty.textContent = `[難易度]${this.difficulty}`;
+      message.innerHTML = this.question;
+
       while(ul.firstChild) {
         ul.removeChild(ul.firstChild);
       }
       this.answers.forEach(answer => {
         const li = document.createElement('li');
-        const btn = document.createElement('button');
-        btn.textContent = answer;
-        btn.addEventListener('click', ()=> {
+        const answerBtn = document.createElement('button');
+        answerBtn.innerHTML = answer;
+        answerBtn.addEventListener('click', ()=> {
           nextQuiz(answer);
         });
-        li.appendChild(btn);
+        li.appendChild(answerBtn);
         ul.appendChild(li);
       });
     }
 
-    getCategory() {
-      return this.category;
-    }
-
     getCorrectAnswer() {
       return this.correctAnswer;
-    }
-
-    getDifficulty() {
-      return this.difficulty;
-    }
-
-    getQuestion() {
-      return this.question;
     }
   }
 
@@ -61,11 +54,24 @@
   const difficulty = document.getElementById('difficulty');
   const message = document.getElementById('message');
   const ul = document.querySelector('ul');
-  const btn = document.getElementById('btn');
+  const startBtn = document.getElementById('startBtn');
+  const homeBtn = document.getElementById('homeBtn');
   let quizzes = [];
   let correct = 0;
   let currentQuiz = 0;
-  let playing = false;
+
+  startBtn.addEventListener('click', () => {
+    h1.textContent = "取得中";
+    message.textContent = "少々お待ちください";
+    getQuizFromApi();
+  });
+
+  homeBtn.addEventListener('click', () => {
+    h1.textContent = "ようこそ";
+    message.textContent = "以下のボタンをクリック";
+    startBtn.classList.remove('hide');
+    homeBtn.classList.add('hide');
+  });
 
   function nextQuiz(answer) {
     if (answer === quizzes[currentQuiz].getCorrectAnswer()) {
@@ -75,59 +81,48 @@
     currentQuiz++;
 
     if ((quizzes.length -1) < currentQuiz) {
-      while(ul.firstChild) {
-        ul.removeChild(ul.firstChild);
-      }
-      h1.textContent = `あなたの正答数は${correct}です！！`;
-      info.classList.add('hide');
-      category.textContent = '';
-      difficulty.textContent = '';
-      message.textContent = "再度チャレンジしたい場合は以下をクリック！！";
-      btn.textContent = 'ホームに戻る';
-      btn.classList.remove('hide');
-      quizzes = [];
-      correct = 0;
-      currentQuiz = 0;
+      displayResult();
       return;
     }
 
-    h1.textContent = `問題${currentQuiz + 1}`;
-    category.textContent = `[ジャンル]${quizzes[currentQuiz].getCategory()}`;
-    difficulty.textContent = `[難易度]${quizzes[currentQuiz].getDifficulty()}`;
-    message.innerHTML = quizzes[currentQuiz].getQuestion();
     quizzes[currentQuiz].displayQuiz()
   }
-
-  document.getElementById('btn').addEventListener('click', () => {
-    if (playing === false) {
-      playing = true;
-      h1.textContent = "取得中";
-      message.textContent = "少々お待ちください";
   
-      fetch('https://opentdb.com/api.php?amount=10')
-      .then(function(response){
-        return response.json()
-      })
-      .then(function(json){
-        const results = Array.from(json.results);
-        results.forEach(quiz => {
-          quizzes.push(new Quiz(quiz));
-        });
-      })
-      .then(function(){
-        h1.textContent = `問題${currentQuiz + 1}`;
-        info.classList.remove('hide');
-        category.textContent = `[ジャンル]${quizzes[currentQuiz].getCategory()}`;
-        difficulty.textContent = `[難易度]${quizzes[currentQuiz].getDifficulty()}`;
-        message.innerHTML = quizzes[currentQuiz].getQuestion();
-        btn.classList.add('hide');
-        quizzes[currentQuiz].displayQuiz()
-      });
-    } else {
-      h1.textContent = "ようこそ";
-      message.textContent = "以下のボタンをクリック";
-      btn.textContent = "開始";
-      playing = false;
+  function displayResult() {
+    while(ul.firstChild) {
+      ul.removeChild(ul.firstChild);
     }
-  });
+    h1.textContent = `あなたの正答数は${correct}です！！`;
+    info.classList.add('hide');
+    category.textContent = '';
+    difficulty.textContent = '';
+    message.textContent = "再度チャレンジしたい場合は以下をクリック！！";
+    homeBtn.classList.remove('hide');
+    quizzes = [];
+    correct = 0;
+    currentQuiz = 0;
+  }
+  
+  function getQuizFromApi() {
+    fetch('https://opentdb.com/api.php?amount=10')
+    .then(function(response){
+      return response.json()
+    })
+    .then(function(json){
+      const results = json.results;
+      results.forEach(result => {
+        const quiz = result;
+        quizzes.push(new Quiz(quiz));
+      });
+    })
+    .then(function(){
+      info.classList.remove('hide');
+      startBtn.classList.add('hide');
+      quizzes[currentQuiz].displayQuiz()
+    })
+    .catch(() => {
+      h1.textContent = "取得エラー";
+      message.textContent = "クイズの取得に失敗しました";
+    });
+  }
 }
