@@ -56,7 +56,7 @@
   const ul = document.querySelector('ul');
   const startBtn = document.getElementById('startBtn');
   const homeBtn = document.getElementById('homeBtn');
-  let quizzes = [];
+  const quizzes = [];
   let correct = 0;
   let currentQuiz = 0;
 
@@ -98,7 +98,7 @@
     difficulty.textContent = '';
     message.textContent = "再度チャレンジしたい場合は以下をクリック！！";
     homeBtn.classList.remove('hide');
-    quizzes = [];
+    quizzes.length = 0;
     correct = 0;
     currentQuiz = 0;
   }
@@ -109,10 +109,10 @@
       return response.json()
     })
     .then(function(json){
-      const results = json.results;
+      const results = [...json.results];
       results.forEach(result => {
-        const quiz = result;
-        quizzes.push(new Quiz(quiz));
+        const quiz = new Quiz(result);
+        quizzes.push(quiz);
       });
     })
     .then(function(){
